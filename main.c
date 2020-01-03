@@ -21,7 +21,7 @@ void initializeMatrix(int* a)
     {
 	for(uint j = 0; j < N; ++j)
 	{
-	    a[i * N + j] = j+1;//rand()%10;
+	    a[i * N + j] = rand()%10;
 	}
     }
 }
@@ -29,11 +29,11 @@ void initializeMatrix(int* a)
 int main() 
 {
     srand(time(NULL));
-    int A[N * N];
+    int A[N * N], inverse[N * N];
     initializeMatrix(A);
     printMatrix(A);
 
-    inverseMatrix(A);
+    inverseMatrix(A, inverse, N);
     printMatrix(A);
 
     return 0;
