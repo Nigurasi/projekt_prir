@@ -2,8 +2,9 @@
  * Macierz odwrotna - Metoda dopelnien algebraicznych
 */
 #include "inversion.h"
+#define N 4
 
-void printMatrix(int* a)
+void printMatrixInt(int* a)
 {
     for(uint i = 0; i < N; ++i)
     {
@@ -12,6 +13,18 @@ void printMatrix(int* a)
 	    printf("%d ", a[i * N + j]);
 	}
 	printf("\n");
+    }
+}
+
+void printMatrixFloat(float* a)
+{
+    for(uint i = 0; i < N; ++i)
+    {
+        for(uint j = 0; j < N; ++j)
+        {
+            printf("%.3f ", a[i * N + j]);
+        }
+        printf("\n");
     }
 }
 
@@ -29,12 +42,13 @@ void initializeMatrix(int* a)
 int main() 
 {
     srand(time(NULL));
-    int A[N * N], inverse[N * N];
+    int A[N * N];
+    float inverse[N * N];
     initializeMatrix(A);
-    printMatrix(A);
+    printMatrixInt(A);
 
-    inverseMatrix(A, inverse, N);
-    printMatrix(A);
+    inverseMatrix(A, inverse);
+    printMatrixFloat(inverse);
 
     return 0;
 }

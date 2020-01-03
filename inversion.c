@@ -12,13 +12,13 @@ void printM(int* a, uint size)
     }
 }
 
-void initializeMinor(int* source, int* minor, uint n, uint row, uint column)
+void initializeMinor(int* source, int* minor, uint size, uint row, uint column)
 {
-    for (uint i = 0; i < n; ++i)
+    for (uint i = 0; i < size; ++i)
     {
         if (i != row)
         {
-            for (uint j = 0; j < n; ++j)
+            for (uint j = 0; j < size; ++j)
             {
                 if (j == column)
                     continue;
@@ -26,22 +26,22 @@ void initializeMinor(int* source, int* minor, uint n, uint row, uint column)
                 {
                     if (i < row)
                     {
-                        minor[i * (n - 1) + j] = source[i * n + j];
+                        minor[i * (size - 1) + j] = source[i * size + j];
                     }
                     else
                     {
-                        minor[(i - 1) * (n - 1) + j] = source[i * n + j];
+                        minor[(i - 1) * (size - 1) + j] = source[i * size + j];
                     }
                 }
                 else
                 {
                     if (i < row)
                     {
-                        minor[i * (n - 1) + j - 1] = source[i * n + j];
+                        minor[i * (size - 1) + j - 1] = source[i * size + j];
                     }
                     else
                     {
-                        minor[(i - 1) * (n - 1) + j - 1] = source[i * n + j];
+                        minor[(i - 1) * (size - 1) + j - 1] = source[i * size + j];
                     }
                 }
             }
@@ -49,9 +49,9 @@ void initializeMinor(int* source, int* minor, uint n, uint row, uint column)
     }
 }
 
-int determinant(int* a, uint n)
+int determinant(int* a, uint size)
 {
-    if(n == 1)
+    if(size == 1)
     {
         return a[0];
     }
@@ -59,23 +59,45 @@ int determinant(int* a, uint n)
     {
         int sum = 0, sign = -1;
 
-        for(uint i = 0; i < n; ++i)
+        for(uint i = 0; i < size; ++i)
         {
-            int minor[(n-1) * (n-1)];
-            initializeMinor(a, minor, n, 0, i);
+            int minor[(size-1) * (size-1)];
+            initializeMinor(a, minor, size, 0, i);
 
             sign = (i % 2) ? -1 : 1;
-            sum += sign * a[0 * n + i] * determinant(minor, n-1);
+            sum += sign * a[0 * size + i] * determinant(minor, size-1);
         }
 
         return sum;
     }
 }
 
-bool inverseMatrix(int* a, int* inverse, uint n)
+void computeAdjugateMatrix(int* a, int* adjugate, uint size)
 {
-    int det = determinant(a, N);
-    printf("Determinant equals %d\n", det);
+    if (size == 1)
+    {
+	adjugate[0] = 1;
+    }
+    else
+    {
+	int minor[(size-1) * (size-1)], sign = 1;
+
+	for(uint i = 0; i < size; ++i)
+	{
+	    for(uint j = 0; j < size; ++j)
+	    {
+		initializeMinor(a, minor, size, i, j);
+		sign = ((i + j) % 2 == 0) ? 1 : -1;
+
+		adjugate[j * size + i] = sign * determinant(minor, size-1);
+	    }
+	}
+    }
+}
+
+bool inverseMatrix(int* a, float* inverse, uint size)
+{
+    int det = determinant(a, size);
     if(det == 0)
     {
         printf("Determinant equals 0. Unable to inverse a matrix\n");
@@ -83,6 +105,17 @@ bool inverseMatrix(int* a, int* inverse, uint n)
     }
     else
     {
+	int adjugateMatrix[size * size];
+	computeAdjugateMatrix(a, adjugateMatrix, size);
+
+	for(uint i = 0; i < size; ++i)
+	{
+	    for(uint j = 0; j < size; ++j)
+	    {
+		inverse[i * size + j] = ((float)adjugateMatrix[i * size + j])/det;
+	    }
+	}
+
 	return true;
     }
 }
