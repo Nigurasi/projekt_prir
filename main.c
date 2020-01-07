@@ -2,7 +2,8 @@
  * Macierz odwrotna - Metoda dopelnien algebraicznych
 */
 #include "inversion.h"
-#define N 4
+#include <unistd.h>
+#define N 11
 
 void printMatrixInt(int* a)
 {
@@ -44,11 +45,34 @@ int main()
     srand(time(NULL));
     int A[N * N];
     float inverse[N * N];
+    float inverseOpenMP[N*N];
     initializeMatrix(A);
+    printf("Matrix:\n");
     printMatrixInt(A);
 
-    inverseMatrix(A, inverse);
+    printf("Measuring sequential solution...\n");
+    clock_t time;
+    time = clock();
+    inverseMatrix(A, inverse, N);
+    time = clock() - time;
+    printf("Sequential inversion:\n");
     printMatrixFloat(inverse);
+
+    sleep(1);
+
+    printf("Measuring parallel solution...\n");
+    clock_t timeOpenMP;
+    timeOpenMP = clock();
+    inverseMatrixOpenMP(A, inverseOpenMP, N);
+    timeOpenMP = clock() - timeOpenMP;
+    printf("Parallel inversion:\n");
+    printMatrixFloat(inverseOpenMP);
+
+    float measuredTime = ((float)time)/(CLOCKS_PER_SEC / 1000);
+    float measuredTimeOpenMP = ((float)timeOpenMP)/(CLOCKS_PER_SEC / 1000);
+    printf("\nSequential inversion took %.3f miliseconds to execute.\n", measuredTime);
+    printf("Parallel inversion took %.3f miliseconds to execute.\n", measuredTimeOpenMP);
+    printf("Difference(seq - OpenMP): %.3f ms\n", measuredTime - measuredTimeOpenMP);
 
     return 0;
 }

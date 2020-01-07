@@ -5,11 +5,12 @@
 #include <stdbool.h>
 #include <time.h>
 #include <math.h>
-#define EPS 0.0001
 
 typedef unsigned int uint;
 
 int determinant(int* a, uint size);
 bool inverseMatrix(int* a, float* inverse, uint size);
+int determinantOpenMP(int* a, uint size);
+bool inverseMatrixOpenMP(int* a, float* inverse, uint size);
 
 #endif //INVERSE_H_

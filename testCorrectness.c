@@ -2,6 +2,7 @@
  * [TEST] Macierz odwrotna - Metoda dopelnien algebraicznych
 */
 #include "inversion.h"
+#define EPS 0.0001
 
 bool FloatEquals(float a, float b)
 {
