@@ -1,4 +1,5 @@
 #include "inversion.h"
+#include <omp.h>
 
 void initializeMinor(int* source, int* minor, uint size, uint row, uint column)
 {
@@ -93,7 +94,7 @@ bool inverseMatrix(int* a, float* inverse, uint size)
     }
     else
     {
-	printf("Determinant does not equals 0.\n");
+	//printf("Determinant does not equals 0.\n");
 	int adjugateMatrix[size * size];
 	computeAdjugateMatrix(a, adjugateMatrix, size);
 
@@ -119,9 +120,11 @@ int determinantOpenMP(int* a, uint size)
     }
     else
     {
-        int sum = 0, sign = -1;
+        uint i;
+	int sum = 0, sign = -1;
 
-        for(uint i = 0; i < size; ++i)
+#pragma omp parallel for shared(a, size, sign) private(i) reduction(+: sum)
+        for(i = 0; i < size; ++i)
         {
             int minor[(size-1) * (size-1)];
             initializeMinor(a, minor, size, 0, i);
@@ -170,7 +173,7 @@ bool inverseMatrixOpenMP(int* a, float* inverse, uint size)
     }
     else
     {
-	printf("Determinant does not equals 0.\n");
+	//printf("Determinant does not equals 0.\n");
 	uint i, j;
         int adjugateMatrix[size * size];
         computeAdjugateMatrixOpenMP(a, adjugateMatrix, size);

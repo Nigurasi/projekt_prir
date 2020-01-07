@@ -3,7 +3,7 @@
 */
 #include "inversion.h"
 #include <unistd.h>
-#define N 11
+#define N 10
 
 void printMatrixInt(int* a)
 {
