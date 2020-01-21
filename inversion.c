@@ -130,7 +130,7 @@ int determinantOpenMP(int* a, uint size)
             initializeMinor(a, minor, size, 0, i);
 
             sign = (i % 2) ? -1 : 1;
-            sum += sign * a[0 * size + i] * determinant(minor, size-1);
+            sum += sign * a[0 * size + i] * determinantOpenMP(minor, size-1);
         }
 
         return sum;
@@ -157,7 +157,7 @@ void computeAdjugateMatrixOpenMP(int* a, int* adjugate, uint size)
                 initializeMinor(a, minor, size, i, j);
                 sign = ((i + j) % 2 == 0) ? 1 : -1;
 
-                adjugate[j * size + i] = sign * determinant(minor, size-1);
+                adjugate[j * size + i] = sign * determinantOpenMP(minor, size-1);
             }
         }
     }
