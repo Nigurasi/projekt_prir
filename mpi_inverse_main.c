@@ -97,9 +97,6 @@ int main(int argc, char** argv)
 {
     srand(time(NULL));
 
-    int A[N * N];
-    float inverseMatrix[N * N];
-
     MPI_Status status;
     int process_id, root_id, processes;
     int error;
@@ -111,12 +108,15 @@ int main(int argc, char** argv)
     error = MPI_Comm_rank(MPI_COMM_WORLD, &process_id);
     error = MPI_Comm_size(MPI_COMM_WORLD, &processes);
 
-    if (processes < N * N)// || processes == N*N)
+    if (processes < N * N)
     {
 	if (process_id == root_id)
         {
             printf("[root process] Started run for %d processes.\n", processes);
 
+	    int A[N * N];
+    	    int adjugateMatrix[N * N];
+	    float inverseMatrix[N * N];
 	    uint avg_val = (N * N)/processes;
 
             initializeMatrix(A);
@@ -140,16 +140,60 @@ int main(int argc, char** argv)
 
 		    int num_vals = e_val - s_val + 1;
 		    error = MPI_Send(&num_vals, 1, MPI_INT, i, send_tag, MPI_COMM_WORLD);
-
-		    //error = MPI_Send();
+		    error = MPI_Send(&s_val, 1, MPI_INT, i, send_tag, MPI_COMM_WORLD);
+		    error = MPI_Send(&A, N * N, MPI_INT, i, send_tag, MPI_COMM_WORLD);
 		}
+
+		int adjugate[N * N];
+		int minor[(N - 1) * (N - 1)], sign = 1, x = -1, y = -1;
+            	for (uint i = 0; i < avg_val + 1; ++i)
+            	{
+                    y = i % N;
+                    x = i / N;
+
+                    initializeMinor(A, minor, N, x, y);
+                    sign = ((i + j) % 2 == 0 ? 1 : -1);
+
+                    adjugate[i] = sign * determinant(minor, N-1);
+		}
+
+		
+		    
+		for(uint i = 0; i < size; ++i)
+        	{
+	            for(uint j = 0; j < size; ++j)
+		    {
+                        inverse[i * size + j] = ((float)adjugateMatrix[i * size + j])/det;
+            	    }
+        	}
+		
 	    }
         }
         else
         {
 	    int num_vals = 0;
+	    int A[N * N], adjugate[N * N];
             error = MPI_Recv(&num_vals, 1, MPI_INT, root_id, send_tag, MPI_COMM_WORLD, &status);
-	    printf("[process no. %d] Received %d values.\n", process_id, num_vals);
+	    error = MPI_Recv(&s_val, 1, MPI_INT, root_id, send_tag, MPI_COMM_WORLD, &status);
+            error = MPI_Recv(&A, N * N, MPI_INT, root_id, send_tag, MPI_COMM_WORLD, &status);
+	    printf("[process no. %d] Received %d values, starting from %d.\n", process_id, num_vals, s_val);
+
+	    int minor[(N - 1) * (N - 1)], sign = 1, x = -1, y = -1;
+	    adjugate[0] = s_val;
+	    adjugate[1] = num_vals;
+	    for (uint i = 0; i < num_vals; ++i)
+	    {
+		y = s_val % N;
+		x = s_val / N;
+
+		initializeMinor(A, minor, N, x, y);
+		sign = ((i + j) % 2 == 0 ? 1 : -1);
+
+		adjugate[i] = sign * determinant(minor, N-1);
+		s_val++;
+	    }
+
+	    error = MPI_Send(&adjugate, num_rows+2, MPI_INT, root_id, rcv_tag, MPI_COMM_WORLD);
         }
 	error = MPI_Finalize();
 
