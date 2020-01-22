@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define N 10
+#define N 3
 #define send_tag 2001
 #define rcv_tag 2002
 
@@ -16,6 +16,18 @@ void printMatrixInt(int* a)
 	for(uint j = 0; j < N; ++j)
 	{
 	    printf("%d ", a[i * N + j]);
+	}
+	printf("\n");
+    }
+}
+
+void printMatrixFloat(float* a)
+{
+    for (uint i = 0; i < N; ++i)
+    {
+	for (uint j = 0; j < N; ++j)
+	{
+	    printf("%.3f ", a[i * N + j]);
 	}
 	printf("\n");
     }
@@ -118,6 +130,8 @@ int main(int argc, char** argv)
     	    int adjugateMatrix[N * N];
 	    float inverseMatrix[N * N];
 	    uint avg_val = (N * N)/processes;
+	    int starts[processes], num[processes];
+	    starts[0] = 0, num[0] = avg_val;
 
             initializeMatrix(A);
             printf("Matrix:\n");
@@ -139,12 +153,14 @@ int main(int argc, char** argv)
 			e_val = N * N - 1;
 
 		    int num_vals = e_val - s_val + 1;
+
+		    starts[i] = s_val, num[i] = num_vals;
+
 		    error = MPI_Send(&num_vals, 1, MPI_INT, i, send_tag, MPI_COMM_WORLD);
 		    error = MPI_Send(&s_val, 1, MPI_INT, i, send_tag, MPI_COMM_WORLD);
 		    error = MPI_Send(&A, N * N, MPI_INT, i, send_tag, MPI_COMM_WORLD);
 		}
 
-		int adjugate[N * N];
 		int minor[(N - 1) * (N - 1)], sign = 1, x = -1, y = -1;
             	for (uint i = 0; i < avg_val + 1; ++i)
             	{
@@ -152,21 +168,25 @@ int main(int argc, char** argv)
                     x = i / N;
 
                     initializeMinor(A, minor, N, x, y);
-                    sign = ((i + j) % 2 == 0 ? 1 : -1);
+                    sign = ((x + y) % 2 == 0 ? 1 : -1);
 
-                    adjugate[i] = sign * determinant(minor, N-1);
+                    inverseMatrix[i] = (float)(sign * determinant(minor, N-1))/det;
 		}
 
-		
-		    
-		for(uint i = 0; i < size; ++i)
-        	{
-	            for(uint j = 0; j < size; ++j)
+		int adj[N * N], sender;
+		for (uint i = 1; i < processes; ++i)
+		{
+		    error = MPI_Recv(&adj, avg_val + 1, MPI_INT, MPI_ANY_SOURCE, rcv_tag, MPI_COMM_WORLD, &status);
+		    sender = status.MPI_SOURCE;
+		    printf("[root process] Got response from process np. %d\n", sender);
+
+		    /*for (uint j = 0; i < num[sender]; ++j)
 		    {
-                        inverse[i * size + j] = ((float)adjugateMatrix[i * size + j])/det;
-            	    }
-        	}
-		
+			inverseMatrix[starts[sender] + j] = ((float)adj[j])/det;
+		    }*/
+		}
+		    
+		printMatrixFloat(inverseMatrix);
 	    }
         }
         else
@@ -179,21 +199,19 @@ int main(int argc, char** argv)
 	    printf("[process no. %d] Received %d values, starting from %d.\n", process_id, num_vals, s_val);
 
 	    int minor[(N - 1) * (N - 1)], sign = 1, x = -1, y = -1;
-	    adjugate[0] = s_val;
-	    adjugate[1] = num_vals;
 	    for (uint i = 0; i < num_vals; ++i)
 	    {
 		y = s_val % N;
 		x = s_val / N;
 
 		initializeMinor(A, minor, N, x, y);
-		sign = ((i + j) % 2 == 0 ? 1 : -1);
+		sign = ((x + y) % 2 == 0 ? 1 : -1);
 
 		adjugate[i] = sign * determinant(minor, N-1);
 		s_val++;
 	    }
 
-	    error = MPI_Send(&adjugate, num_rows+2, MPI_INT, root_id, rcv_tag, MPI_COMM_WORLD);
+	    error = MPI_Send(&adjugate, num_vals, MPI_INT, root_id, rcv_tag, MPI_COMM_WORLD);
         }
 	error = MPI_Finalize();
 
