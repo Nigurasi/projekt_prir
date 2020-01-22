@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define N 3
+#define N 10
 #define send_tag 2001
 #define rcv_tag 2002
 
@@ -120,7 +120,7 @@ int main(int argc, char** argv)
     error = MPI_Comm_rank(MPI_COMM_WORLD, &process_id);
     error = MPI_Comm_size(MPI_COMM_WORLD, &processes);
 
-    if (processes < N * N)
+    if (processes <= (N * N)/2 || processes == N * N)
     {
 	if (process_id == root_id)
         {
@@ -136,6 +136,9 @@ int main(int argc, char** argv)
             initializeMatrix(A);
             printf("Matrix:\n");
             printMatrixInt(A);
+
+	    clock_t time;
+	    time = clock();
 
             int det = determinant(A, N);
             if (det == 0)
@@ -164,8 +167,8 @@ int main(int argc, char** argv)
 		int minor[(N - 1) * (N - 1)], sign = 1, x = -1, y = -1;
             	for (uint i = 0; i < avg_val + 1; ++i)
             	{
-                    y = i % N;
-                    x = i / N;
+                    x = i % N;
+                    y = i / N;
 
                     initializeMinor(A, minor, N, x, y);
                     sign = ((x + y) % 2 == 0 ? 1 : -1);
@@ -180,13 +183,18 @@ int main(int argc, char** argv)
 		    sender = status.MPI_SOURCE;
 		    printf("[root process] Got response from process np. %d\n", sender);
 
-		    /*for (uint j = 0; i < num[sender]; ++j)
+		    for (uint j = 0; j < num[sender]; ++j)
 		    {
 			inverseMatrix[starts[sender] + j] = ((float)adj[j])/det;
-		    }*/
+		    }
 		}
-		    
+		
+		time = clock() - time;
+		float measuredTime = ((float)time)/(CLOCKS_PER_SEC / 1000);
+
 		printMatrixFloat(inverseMatrix);
+
+		printf("MPI computation took: %.3f miliseconds to execute.\n", measuredTime);
 	    }
         }
         else
@@ -201,8 +209,8 @@ int main(int argc, char** argv)
 	    int minor[(N - 1) * (N - 1)], sign = 1, x = -1, y = -1;
 	    for (uint i = 0; i < num_vals; ++i)
 	    {
-		y = s_val % N;
-		x = s_val / N;
+		x = s_val % N;
+		y = s_val / N;
 
 		initializeMinor(A, minor, N, x, y);
 		sign = ((x + y) % 2 == 0 ? 1 : -1);
